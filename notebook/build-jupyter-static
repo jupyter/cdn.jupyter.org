@@ -1,0 +1,36 @@
+#!/bin/sh
+# Usage: build-jupyter-static /path/to/stuff/4.0.0 [tag]
+#
+# This builds the latest static resources of Jupyter Notebook
+# and stages them to the given location.
+# It works by cloning the notebook repo, building a wheel, then copying the static files.
+
+set -e
+
+test -z "$1" && echo "Must specify destination" && exit -1
+tag="$2"
+
+dest="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+dest_parent=$(dirname "$dest")
+
+test -e "$dest" && (echo "Destination $dest already exists" && exit -1)
+test -d "$dest_parent" || (echo "Destination $dest_parent doesn't exist" && exit -1)
+
+tmp=/tmp/build-jupyter-static
+test -d $tmp || mkdir $tmp
+repo=$tmp/notebook
+echo "Working in $repo, installing to $dest"
+
+if [ -d "$repo" ]; then
+  cd $repo
+  git pull
+else
+  cd $tmp
+  git clone https://github.com/jupyter/notebook.git
+fi
+cd $repo
+git clean -xfd
+python setup.py bdist_wheel
+cd dist
+unzip *.whl
+mv -v notebook/static $dest

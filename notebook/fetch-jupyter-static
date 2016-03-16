@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Fetches static assets from a Jupyter notebook release"""
+
+import hashlib
+import os
+import shutil
+import sys
+from tempfile import TemporaryDirectory
+import zipfile
+
+from urllib.parse import urlparse
+
+from distlib.locators import SimpleScrapingLocator
+import requests
+
+join = os.path.join
+
+def check_hash(path, hash_scheme, digest):
+    """Check the hash of a download"""
+    if not digest:
+        return True
+    with open(path, 'rb') as f:
+        data = f.read()
+    hasher = getattr(hashlib, hash_scheme)
+    return hasher(data).hexdigest() == digest
+
+def cached_download(cache_dir, url, hash_scheme=None, digest=None):
+    """Download a file with a cache directory."""
+    parsed = urlparse(url)
+    dest = join(*[cache_dir, parsed.netloc] + parsed.path.split('/'))
+    parent, basename = os.path.split(dest)
+    if os.path.exists(dest):
+        if check_hash(dest, hash_scheme, digest):
+            # story checks out
+            print("Cache found: %s" % dest)
+            return dest
+        else:
+            print("hash doesn't match, redownloading: %s" % url)
+            os.remove(dest)
+    try:
+        os.makedirs(parent)
+    except FileExistsError:
+        pass
+    print("Downloading %s" % url)
+    with open(dest, 'wb') as f:
+        r = requests.get(url, stream=True)
+        r.raise_for_status()
+        for chunk in r.iter_content(1024):
+                f.write(chunk)
+    if not check_hash(dest, hash_scheme, digest):
+        print("hash doesn't match (%s): %s" % (hash, url), file=sys.stderr)
+        return
+    return dest
+
+def download_version(project, version, cache_dir):
+    """Download the specified version of a PyPI package (requires wheels)"""
+    urls = project['urls'][version]
+    whl = None
+    for url in urls:
+        if url.endswith('.whl'):
+            break
+    else:
+        print("No wheel found for %s: %s" % (version, urls), file=sys.stderr)
+        return
+    
+    hash_scheme, digest = project['digests'][url]
+    return cached_download(cache_dir, url, hash_scheme, digest)
+
+def fetch_static(project, version, dest, cache_dir):
+    """Fetch the static resources out of a given notebook release into dest"""
+    if os.path.exists(dest):
+        print("Already have: %s" % dest)
+        return
+    whl = download_version(project, version, cache_dir)
+    if not whl:
+        return
+    print("Extracting %s to %s" % (whl, dest))
+    zf = zipfile.ZipFile(whl)
+    static = [ s for s in zf.namelist() if s.startswith('notebook/static/') ]
+    with TemporaryDirectory() as td:
+        zf.extractall(td, static)
+        shutil.move(join(td, 'notebook', 'static'), dest)
+
+def main():
+    loc = SimpleScrapingLocator('https://pypi.python.org/simple/')
+    project = loc.get_project('notebook')
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+    else:
+        path = '.'
+    cache_dir = '/tmp/nbstatic-cache'
+    
+    for version in project['urls']:
+        dest = join(path, version)
+        fetch_static(project, version, dest, cache_dir)
+
+if __name__ == '__main__':
+    main()
