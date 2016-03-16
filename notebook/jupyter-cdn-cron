@@ -1,0 +1,7 @@
+#!/bin/bash
+# Add me to /etc/cron.hourly/
+# to keep notebook static resources up-to-date
+
+cd /srv/cdn.jupyter.org/notebook
+./wrapper.sh
+./fetch-jupyter-static
