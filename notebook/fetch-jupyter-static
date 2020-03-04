@@ -90,7 +90,7 @@ def main():
         path = '.'
     cache_dir = '/tmp/nbstatic-cache'
     
-    for version in project['urls']:
+    for version in sorted(project['urls']):
         dest = join(path, version)
         fetch_static(project, version, dest, cache_dir)
 
