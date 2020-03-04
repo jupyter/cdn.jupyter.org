@@ -5,6 +5,7 @@ import hashlib
 import os
 import shutil
 import sys
+from distutils.version import LooseVersion
 from tempfile import TemporaryDirectory
 import zipfile
 
@@ -90,7 +91,7 @@ def main():
         path = '.'
     cache_dir = '/tmp/nbstatic-cache'
     
-    for version in sorted(project['urls']):
+    for version in sorted(project['urls'], key=LooseVersion):
         dest = join(path, version)
         fetch_static(project, version, dest, cache_dir)
 
