@@ -30,7 +30,7 @@ else
 fi
 cd $repo
 git clean -xfd
-python setup.py bdist_wheel
+python3 setup.py bdist_wheel
 cd dist
 unzip *.whl
 mv -v notebook/static $dest
