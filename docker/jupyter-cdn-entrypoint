@@ -1,7 +1,9 @@
 #!/bin/sh
 set -ex
 
-echo "entrypoint $@"
+# enable serving ssl if ssl key files are present
+test -f /etc/ssl/jupyter.org.key && ln -s /etc/nginx/sites-available/jupyter-cdn-ssl /etc/nginx/sites-enabled/jupyter-cdn-ssl
+
 # make sure /srv/cdn.jupyter.org is populated
 # in case it's mounted as a volume
 cp -rv /src/cdn.jupyter.org/* /srv/cdn.jupyter.org/
@@ -9,6 +11,5 @@ cp -rv /src/cdn.jupyter.org/* /srv/cdn.jupyter.org/
 # start background fetch
 cron-lite &
 
-echo "launching $@"
 # launch CMD
 exec "$@"

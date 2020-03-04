@@ -17,6 +17,7 @@ RUN python3 -m pip install --no-cache --upgrade pip \
 
 # install nginx configuration as default
 ADD docker/jupyter-cdn.nginx /etc/nginx/sites-available/default
+ADD docker/jupyter-cdn-ssl.nginx /etc/nginx/sites-available/jupyter-cdn-ssl
 
 # add scripts twice in case /srv is mounted as a volume for persistence
 # TODO: don't require scripts to be in content directory
