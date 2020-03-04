@@ -1,0 +1,9 @@
+#!/bin/sh
+# light version of the cron job for docker
+# runs the jupyter-cdn-cron script hourly
+# instead of asking cron to do it
+
+set +e -x
+date
+/srv/cdn.jupyter.org/notebook/jupyter-cdn-cron
+sleep 3600

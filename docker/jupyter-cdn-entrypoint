@@ -1,0 +1,14 @@
+#!/bin/sh
+set -ex
+
+echo "entrypoint $@"
+# make sure /srv/cdn.jupyter.org is populated
+# in case it's mounted as a volume
+cp -rv /src/cdn.jupyter.org/* /srv/cdn.jupyter.org/
+
+# start background fetch
+cron-lite &
+
+echo "launching $@"
+# launch CMD
+exec "$@"

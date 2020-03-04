@@ -1,0 +1,13 @@
+# add me to /etc/nginx/sites-available
+server {
+    listen 80 default_server;
+    server_name cdn.jupyter.org un-cdn.jupyter.org;
+
+    error_log /var/log/nginx/error.log;
+
+    root /srv/cdn.jupyter.org;
+
+    location / {
+      add_header 'Access-Control-Allow-Origin' '*';
+    }
+}
