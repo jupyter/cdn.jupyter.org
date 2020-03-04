@@ -1,9 +1,11 @@
 # add me to /etc/nginx/sites-available
+
 server {
+    error_log /dev/stdout info;
+    access_log /dev/stdout;
+
     listen 80 default_server;
     server_name cdn.jupyter.org un-cdn.jupyter.org;
-
-    error_log /var/log/nginx/error.log;
 
     root /srv/cdn.jupyter.org;
 
